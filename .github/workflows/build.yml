@@ -20,29 +20,20 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libreadline-dev libsqlite3-dev wget curl llvm libncursesw5-dev build-essential
-    
-      # ЭТОТ ШАГ КРИТИЧЕСКИ ВАЖЕН:
-      # Мы удаляем папку .buildozer, чтобы стереть память о том, 
-      # что "нужна версия 37.0.0". Без этого шага сборка снова попросит её.
-      - name: Clean Buildozer Cache
-        run: rm -rf /home/runner/.buildozer
-
-      # ГЛАВНЫЙ ТРЮК:
-      # Переменная BUILD_OS_ACCEPT_LICENSES=1 говорит Buildozer:
-      # "Когда будешь скачивать SDK, автоматически соглашайся со всеми лицензиями".
-      # Это сработает ТОЛЬКО если мы не требуем конкретную старую версию.
-      - name: Enable auto-accept licenses
-        run: echo "BUILD_OS_ACCEPT_LICENSES=1" >> $GITHUB_ENV
 
       - name: Install buildozer
         run: pip install buildozer
 
-- name: Accept Android SDK licenses
-  run: |
-    yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
-    # или альтернативный путь к sdkmanager в зависимости от образа:
-    # yes | sdkmanager --licenses
+      # ЖЁСТКИЙ СБРОС КЭША — обязательно, чтобы не тянулись старые настройки
+      - name: Clean Buildozer Cache
+        run: rm -rf /home/runner/.buildozer
+      - name: Accept Android SDK licenses
+        run: |
+        yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        # или альтернативный путь к sdkmanager в зависимости от образа:
+         # yes | sdkmanager --licenses
       - name: Build APK
+        # -v — подробный лог, чтобы видеть, какую версию build-tools он реально берёт
         run: buildozer -v android debug
 
       - name: Upload APK artifact
