@@ -15,39 +15,25 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+
+      # ВАЖНО: Ставим переменную ДО установки buildozer
+      - name: Enable auto-accept licenses for Buildozer
+        run: echo "BUILD_OS_ACCEPT_LICENSES=1" >> $GITHUB_ENV
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            openjdk-17-jdk \
-            autoconf \
-            libtool \
-            pkg-config \
-            zlib1g-dev \
-            libncurses5-dev \
-            libreadline-dev \
-            libsqlite3-dev \
-            wget \
-            curl \
-            llvm \
-            libncursesw5-dev \
-            build-essential
-          
+          sudo apt-get install -y openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libreadline-dev libsqlite3-dev wget curl llvm libncursesw5-dev build-essential
+
       - name: Install buildozer
         run: pip install buildozer
 
-      # 👇 НОВЫЙ ШАГ: говорим Buildozer принимать лицензии автоматически 👇
-      - name: Set Buildozer to auto-accept licenses
-        run: echo "BUILD_OS_ACCEPT_LICENSES=1" >> $GITHUB_ENV
-      # 👆 НОВЫЙ ШАГ 👆
-      
-      - name: Clean Buildozer Cache (Force Reset)
-        run: |
-          echo "Удаляем старый кэш Buildozer, чтобы сбросить требование build-tools 37.0.0..."
-          rm -rf /home/runner/.buildozer
-          echo "Кэш удалён."
+      # ЖЁСТКИЙ СБРОС КЭША: удаляем всё, где Buildozer мог запомнить версию 37.0.0
+      - name: Clean Buildozer Cache
+        run: rm -rf /home/runner/.buildozer
 
       - name: Build APK
+        # -v — подробный лог, чтобы видеть, что происходит
         run: buildozer -v android debug
 
       - name: Upload APK artifact
