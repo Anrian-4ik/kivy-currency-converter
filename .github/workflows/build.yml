@@ -54,11 +54,9 @@ jobs:
         run: echo "BUILD_OS_ACCEPT_LICENSES=1" >> $GITHUB_ENV
         
       - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
         id: buildozer
-        with:
-          command: yes | buildozer -v android debug
-          buildozer_version: master
+        run: |
+          yes | buildozer -v android debug
           
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
