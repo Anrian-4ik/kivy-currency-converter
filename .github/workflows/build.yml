@@ -1,41 +1,64 @@
-name: Build Kivy APK
+ame: Build Kivy APK
 
-on: push: branches: - main
+on:
+  push:
+    branches:
+      - main
 
-jobs: build: runs-on: ubuntu-22.04
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-steps:
-  - name: Checkout code
-    uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-  - name: Setup Python
-    uses: actions/setup-python@v5
-    with:
-      python-version: '3.10'
+      # Лучше ставить Java через apt — так Buildozer видит её корректно в PATH
+      - name: Install OpenJDK 17
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-17-jdk
 
-  - name: Setup Java
-    uses: actions/setup-java@v4
-    with:
-      distribution: temurin
-      java-version: '17'
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            libtool \
+            pkg-config \
+            zlib1g-dev \
+            libncurses5-dev \
+            libreadline-dev \
+            libsqlite3-dev \
+            wget \
+            curl \
+            llvm \
+            libncursesw5-dev \
+            build-essential \
+            zip \
+            unzip
 
-  - name: Install dependencies
-    run: |
-      sudo apt-get update
-      sudo apt-get install -y autoconf libtool pkg-config zlib1g-dev libncurses5-dev libreadline-dev libsqlite3-dev wget curl llvm libncursesw5-dev build-essential zip unzip
+      - name: Install Buildozer and Cython
+        run: pip install buildozer cython==0.29.33
 
-  - name: Install Buildozer
-    run: pip install buildozer cython==0.29.33
+      # КРИТИЧЕСКИ ВАЖНО: сбрасываем кэш, чтобы забыть про build-tools 37.0.0
+      - name: Clean Buildozer Cache
+        run: rm -rf ~/.buildozer
 
-  - name: Clean cache
-    run: rm -rf ~/.buildozer
+      # ГЛАВНЫЙ ШАГ: авто-принятие лицензий (работает только при пустом android.build_tools)
+      - name: Enable auto-accept licenses
+        run: echo "BUILD_OS_ACCEPT_LICENSES=1" >> $GITHUB_ENV
 
-  - name: Build APK
-    run: buildozer -v android debug
+      - name: Build APK
+        run: buildozer -v android debug
 
-  - name: Upload APK
-    uses: actions/upload-artifact@v4
-    with:
-      name: apk-file
-      path: bin/*.apk
-      if-no-files-found: error
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-file
+          path: bin/*.apk
+          if-no-files-found: error
