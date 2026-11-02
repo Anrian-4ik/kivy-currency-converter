@@ -32,6 +32,13 @@ jobs:
             llvm \
             libncursesw5-dev \
             build-essential
+     
+      - name: Auto-accept Android SDK licenses
+        run: |
+          echo "Автоматически принимаем лицензии Android SDK..."
+          yes | sdkmanager --licenses
+          echo "Лицензии приняты."
+          
       - name: Install buildozer
         run: pip install buildozer
 
