@@ -24,12 +24,20 @@ jobs:
       - name: Install buildozer
         run: pip install buildozer
 
-      # ЖЁСТКИЙ СБРОС КЭША — обязательно, чтобы не тянулись старые настройки
+      # ЭТОТ ШАГ КРИТИЧЕСКИ ВАЖЕН:
+      # Мы удаляем папку .buildozer, чтобы стереть память о том, 
+      # что "нужна версия 37.0.0". Без этого шага сборка снова попросит её.
       - name: Clean Buildozer Cache
         run: rm -rf /home/runner/.buildozer
 
+      # ГЛАВНЫЙ ТРЮК:
+      # Переменная BUILD_OS_ACCEPT_LICENSES=1 говорит Buildozer:
+      # "Когда будешь скачивать SDK, автоматически соглашайся со всеми лицензиями".
+      # Это сработает ТОЛЬКО если мы не требуем конкретную старую версию.
+      - name: Enable auto-accept licenses
+        run: echo "BUILD_OS_ACCEPT_LICENSES=1" >> $GITHUB_ENV
+
       - name: Build APK
-        # -v — подробный лог, чтобы видеть, какую версию build-tools он реально берёт
         run: buildozer -v android debug
 
       - name: Upload APK artifact
