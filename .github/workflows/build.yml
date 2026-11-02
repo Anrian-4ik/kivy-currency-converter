@@ -35,6 +35,13 @@ jobs:
       - name: Install buildozer
         run: pip install buildozer
 
+
+      - name: Clean Buildozer Cache (Force Reset)
+        run: |
+          echo "Удаляем старый кэш Buildozer, чтобы сбросить требование build-tools 37.0.0..."
+          rm -rf /home/runner/.buildozer
+          echo "Кэш удалён."
+
       - name: Build APK
         run: buildozer -v android debug
 
