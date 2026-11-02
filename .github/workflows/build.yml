@@ -1,41 +1,66 @@
 name: Build Kivy APK
 
-on:
-  push:
-    branches: [ main ]
+on: push: branches: [ main ]
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+jobs: build: runs-on: ubuntu-latest
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
+steps:
+  - name: Checkout code
+    uses: actions/checkout@v4
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libreadline-dev libsqlite3-dev wget curl llvm libncursesw5-dev build-essential
+  - name: Set up Python
+    uses: actions/setup-python@v5
+    with:
+      python-version: '3.10'
 
-      - name: Install buildozer
-        run: pip install buildozer
+  - name: Setup Java
+    uses: actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: '17'
 
-      # ЖЁСТКИЙ СБРОС КЭША — обязательно, чтобы не тянулись старые настройки
-      - name: Clean Buildozer Cache
-        run: rm -rf /home/runner/.buildozer
-      - name: Accept Android SDK licenses
-        run: |
-          yes | sdkmanager --licenses || true
-      - name: Build APK
-        # -v — подробный лог, чтобы видеть, какую версию build-tools он реально берёт
-        run: buildozer -v android debug
+  - name: Setup Android SDK
+    uses: android-actions/setup-android@v3
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: apk-file
-          path: bin/*.apk
+  - name: Accept Android SDK licenses
+    run: |
+      yes | sdkmanager --licenses || true
+
+  - name: Install Android SDK packages
+    run: |
+      sdkmanager "platform-tools"
+      sdkmanager "platforms;android-35"
+      sdkmanager "build-tools;37.0.0"
+
+  - name: Install system dependencies
+    run: |
+      sudo apt-get update
+      sudo apt-get install -y \
+        autoconf \
+        libtool \
+        pkg-config \
+        zlib1g-dev \
+        libncurses5-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        wget \
+        curl \
+        llvm \
+        libncursesw5-dev \
+        build-essential
+
+  - name: Install Buildozer
+    run: pip install buildozer cython==0.29.33
+
+  - name: Clean Buildozer Cache
+    run: rm -rf /home/runner/.buildozer
+
+  - name: Build APK
+    run: buildozer -v android debug
+
+  - name: Upload APK artifact
+    uses: actions/upload-artifact@v4
+    with:
+      name: apk-file
+      path: bin/*.apk
+      if-no-files-found: error
