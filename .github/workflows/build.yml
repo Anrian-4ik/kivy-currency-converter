@@ -16,10 +16,6 @@ jobs:
         with:
           python-version: '3.10'
 
-      # ВАЖНО: Ставим переменную ДО установки buildozer
-      - name: Enable auto-accept licenses for Buildozer
-        run: echo "BUILD_OS_ACCEPT_LICENSES=1" >> $GITHUB_ENV
-
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -28,12 +24,12 @@ jobs:
       - name: Install buildozer
         run: pip install buildozer
 
-      # ЖЁСТКИЙ СБРОС КЭША: удаляем всё, где Buildozer мог запомнить версию 37.0.0
+      # ЖЁСТКИЙ СБРОС КЭША — обязательно, чтобы не тянулись старые настройки
       - name: Clean Buildozer Cache
         run: rm -rf /home/runner/.buildozer
 
       - name: Build APK
-        # -v — подробный лог, чтобы видеть, что происходит
+        # -v — подробный лог, чтобы видеть, какую версию build-tools он реально берёт
         run: buildozer -v android debug
 
       - name: Upload APK artifact
