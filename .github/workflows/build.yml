@@ -1,6 +1,6 @@
 name: Build Kivy APK
 
-on: push: branches: [ main ]
+'on': push: branches: - main
 
 jobs: build: runs-on: ubuntu-22.04
 
@@ -43,12 +43,10 @@ steps:
       pip install buildozer cython==0.29.33
 
   - name: Clean Buildozer Cache
-    run: |
-      rm -rf ~/.buildozer
+    run: rm -rf ~/.buildozer
 
   - name: Build APK
-    run: |
-      buildozer -v android debug
+    run: buildozer -v android debug
 
   - name: Upload APK artifact
     uses: actions/upload-artifact@v4
