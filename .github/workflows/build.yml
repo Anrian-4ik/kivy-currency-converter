@@ -20,10 +20,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libreadline-dev libsqlite3-dev wget curl llvm libncursesw5-dev build-essential
-
-      - name: Install buildozer
-        run: pip install buildozer
-
+    
       # ЭТОТ ШАГ КРИТИЧЕСКИ ВАЖЕН:
       # Мы удаляем папку .buildozer, чтобы стереть память о том, 
       # что "нужна версия 37.0.0". Без этого шага сборка снова попросит её.
@@ -37,6 +34,14 @@ jobs:
       - name: Enable auto-accept licenses
         run: echo "BUILD_OS_ACCEPT_LICENSES=1" >> $GITHUB_ENV
 
+      - name: Install buildozer
+        run: pip install buildozer
+
+- name: Accept Android SDK licenses
+  run: |
+    yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
+    # или альтернативный путь к sdkmanager в зависимости от образа:
+    # yes | sdkmanager --licenses
       - name: Build APK
         run: buildozer -v android debug
 
