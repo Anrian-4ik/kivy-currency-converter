@@ -29,11 +29,7 @@ jobs:
         run: rm -rf /home/runner/.buildozer
       - name: Accept Android SDK licenses
         run: |
-          mkdir -p "$ANDROID_SDK_ROOT/licenses"
-          echo "8933bab16c5c12bc9dbece5f0e51fc0630e3843a" > "$ANDROID_SDK_ROOT/licenses/android-sdk-license"
-          echo "d56f5187479451eabf01fb78af6dfcb137a64540" >> "$ANDROID_SDK_ROOT/licenses/android-sdk-license"
-          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" >> "$ANDROID_SDK_ROOT/licenses/android-sdk-license"
-
+          yes | sdkmanager --licenses || true
       - name: Build APK
         # -v — подробный лог, чтобы видеть, какую версию build-tools он реально берёт
         run: buildozer -v android debug
