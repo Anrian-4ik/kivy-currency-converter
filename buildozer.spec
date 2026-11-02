@@ -16,8 +16,7 @@ android.minapi = 21
 [android]
 # ... другие настройки ...
 android.sdk = 33
-android.ndk = r28c
-# ВАЖНО: оставь пустым — тогда Buildozer сам выберет совместимую версию build-tools
-android.build_tools =
+android.ndk = 28c
+android.build_tools = 33.0.2
 android.arch = arm64-v8a
 p4a.branch = master
