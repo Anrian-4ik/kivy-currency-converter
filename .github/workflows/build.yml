@@ -2,7 +2,7 @@ name: Build Kivy APK
 
 on: push: branches: [ main ]
 
-jobs: build: runs-on: ubuntu-latest
+jobs: build: runs-on: ubuntu-22.04
 
 steps:
   - name: Checkout code
@@ -19,19 +19,6 @@ steps:
       distribution: temurin
       java-version: '17'
 
-  - name: Setup Android SDK
-    uses: android-actions/setup-android@v3
-
-  - name: Accept Android SDK licenses
-    run: |
-      yes | sdkmanager --licenses || true
-
-  - name: Install Android SDK packages
-    run: |
-      sdkmanager "platform-tools"
-      sdkmanager "platforms;android-35"
-      sdkmanager "build-tools;37.0.0"
-
   - name: Install system dependencies
     run: |
       sudo apt-get update
@@ -47,16 +34,21 @@ steps:
         curl \
         llvm \
         libncursesw5-dev \
-        build-essential
+        build-essential \
+        zip \
+        unzip
 
   - name: Install Buildozer
-    run: pip install buildozer cython==0.29.33
+    run: |
+      pip install buildozer cython==0.29.33
 
   - name: Clean Buildozer Cache
-    run: rm -rf /home/runner/.buildozer
+    run: |
+      rm -rf ~/.buildozer
 
   - name: Build APK
-    run: buildozer -v android debug
+    run: |
+      buildozer -v android debug
 
   - name: Upload APK artifact
     uses: actions/upload-artifact@v4
