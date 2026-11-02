@@ -52,10 +52,14 @@ jobs:
       # ГЛАВНЫЙ ШАГ: авто-принятие лицензий (работает только при пустом android.build_tools)
       - name: Enable auto-accept licenses
         run: echo "BUILD_OS_ACCEPT_LICENSES=1" >> $GITHUB_ENV
-
-      - name: Build APK
-        run: buildozer -v android debug
-
+        
+      - name: Build with Buildozer
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
+        with:
+          command: yes | buildozer -v android debug
+          buildozer_version: master
+          
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
