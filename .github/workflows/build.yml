@@ -1,66 +1,48 @@
-name: Build Kivy APK
+name: Build Signed APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-22.04
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      # Step 1: Decode Keystore from base64
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android.jks
+
+      # Step 2: Build Release APK using Buildozer
+      - name: Build Release APK
+        uses: digreatbrian/buildozer-action@v2
         with:
-          python-version: '3.10'
+          python-version: 3.10.5
+          buildozer-cmd: buildozer -v android release
 
-      # Лучше ставить Java через apt — так Buildozer видит её корректно в PATH
-      - name: Install OpenJDK 17
+      # Step 3: Sign the APK manually with .jks keystore
+      - name: Sign the APK manually
         run: |
-          sudo apt-get update
-          sudo apt-get install -y openjdk-17-jdk
+          APK_PATH=$(find ./bin -name "*-release-unsigned.apk" | head -n 1)
+          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
+            -keystore android.jks \
+            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
+            -keypass "${{ secrets.KEY_PASSWORD }}" \
+            "$APK_PATH" "${{ secrets.KEY_ALIAS }}"
 
-      - name: Install system dependencies
+      # Step 4: Ren2ame the signed APK
+      - name: Rename the signed APK
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            autoconf \
-            libtool \
-            pkg-config \
-            zlib1g-dev \
-            libncurses5-dev \
-            libreadline-dev \
-            libsqlite3-dev \
-            wget \
-            curl \
-            llvm \
-            libncursesw5-dev \
-            build-essential \
-            zip \
-            unzip
+          APK_PATH=$(find ./bin -name "*-release-unsigned.apk" | head -n 1)
+          NEW_APK_PATH="${APK_PATH/-unsigned/-signed}"
+          mv "$APK_PATH" "$NEW_APK_PATH"
 
-      - name: Install Buildozer and Cython
-        run: pip install buildozer cython==0.29.33
-
-      # КРИТИЧЕСКИ ВАЖНО: сбрасываем кэш, чтобы забыть про build-tools 37.0.0
-      - name: Clean Buildozer Cache
-        run: rm -rf ~/.buildozer
-
-      # ГЛАВНЫЙ ШАГ: авто-принятие лицензий (работает только при пустом android.build_tools)
-      - name: Enable auto-accept licenses
-        run: echo "BUILD_OS_ACCEPT_LICENSES=1" >> $GITHUB_ENV
-        
-      - name: Build with Buildozer
-        id: buildozer
-        run: |
-          yes | buildozer -v android debug
-          
-      - name: Upload APK artifact
+      # Step 5: Upload Signed APK Artifact
+      - name: Upload Signed APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: apk-file
-          path: bin/*.apk
-          if-no-files-found: error
+          name: signed-release-apk
+          path: ./bin/*-release-signed.apk
